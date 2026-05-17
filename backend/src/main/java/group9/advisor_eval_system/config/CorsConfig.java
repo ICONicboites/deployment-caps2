@@ -14,12 +14,21 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Allow common dev origins. Using patterns prevents "Failed to fetch" when the
-        // app
-        // is opened via 127.0.0.1 or a different dev-server port.
-        configuration.setAllowedOriginPatterns(Arrays.asList(
+        // Allow origins defined by environment variable FRONTEND_URLS (comma-separated),
+        // otherwise fallback to local dev origins.
+        String frontendEnv = System.getenv("FRONTEND_URLS");
+        if (frontendEnv != null && !frontendEnv.isBlank()) {
+            String[] urls = Arrays.stream(frontendEnv.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toArray(String[]::new);
+            configuration.setAllowedOriginPatterns(Arrays.asList(urls));
+        } else {
+            // Default dev origins
+            configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*",
                 "http://127.0.0.1:*"));
+        }
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
